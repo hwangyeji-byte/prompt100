@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>프롬프트 100선 | AI가 사례기록 쓰는 날</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#1a1aff;--blue-deep:#0d0d99;--blue-light:#eeeeff;--blue-mid:#6666ff;
+  --pink:#E91E8C;--pink-light:#fce4f8;
+  --navy:#0d1b4b;--white:#fff;--bg:#f8f9ff;
+  --text:#1a1a2e;--text-muted:#555577;--border:#e0e0f0;
+}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── 헤더 ── */
+.site-header{background:var(--navy);padding:2rem 1.5rem 1.5rem;text-align:center;position:relative;overflow:hidden}
+.site-header::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,#1a1aff22 0%,transparent 60%),radial-gradient(ellipse at 70% 30%,#E91E8C18 0%,transparent 55%)}
+.header-badge{display:inline-block;background:var(--pink);color:#fff;font-size:11px;font-weight:700;padding:4px 14px;border-radius:20px;letter-spacing:.08em;margin-bottom:1rem;position:relative}
+.header-title{font-size:clamp(22px,5vw,32px);font-weight:700;color:#fff;line-height:1.3;position:relative;margin-bottom:.5rem}
+.header-title span{color:#6666ff}
+.header-sub{font-size:14px;color:#aab;position:relative;margin-bottom:1.25rem}
+.header-meta{display:flex;justify-content:center;gap:1.5rem;position:relative}
+.header-meta span{font-size:12px;color:#8899cc;display:flex;align-items:center;gap:5px}
+.header-meta span::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--blue-mid)}
+
+/* ── 검색 ── */
+.search-wrap{padding:1.25rem 1.5rem;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,50,.06)}
+.search-inner{max-width:800px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.search-box{flex:1;height:40px;border:1.5px solid var(--border);border-radius:8px;padding:0 14px;font-size:14px;font-family:inherit;color:var(--text);outline:none;transition:border .15s}
+.search-box:focus{border-color:var(--blue)}
+.count-badge{font-size:12px;color:var(--text-muted);white-space:nowrap}
+
+/* ── 필터 탭 ── */
+.filter-wrap{max-width:800px;margin:0 auto;padding:1rem 1.5rem .25rem;overflow-x:auto}
+.filter-row{display:flex;gap:6px;flex-wrap:nowrap;padding-bottom:.5rem}
+.f-btn{flex-shrink:0;font-size:12px;font-weight:500;padding:5px 14px;border-radius:20px;border:1.5px solid var(--border);background:#fff;color:var(--text-muted);cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap}
+.f-btn:hover{border-color:var(--blue);color:var(--blue)}
+.f-btn.active{background:var(--blue);border-color:var(--blue);color:#fff}
+
+/* ── 메인 콘텐츠 ── */
+.main{max-width:800px;margin:0 auto;padding:1.25rem 1.5rem 4rem}
+.chapter-block{margin-bottom:2.5rem}
+.ch-header{display:flex;align-items:center;gap:10px;margin-bottom:1rem;padding-bottom:.75rem;border-bottom:2px solid var(--border)}
+.ch-label{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap}
+.ch-title-text{font-size:16px;font-weight:700;color:var(--text)}
+.ch-cnt{margin-left:auto;font-size:12px;color:var(--text-muted)}
+
+/* ── 카드 그리드 ── */
+.prompt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px}
+@media(max-width:600px){.prompt-grid{grid-template-columns:1fr}}
+.prompt-card{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:1rem 1.1rem;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.prompt-card:hover{border-color:var(--blue);box-shadow:0 4px 16px rgba(26,26,255,.08)}
+.p-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:6px}
+.p-num{font-size:11px;font-weight:700;min-width:32px;color:var(--text-muted)}
+.p-title{font-size:14px;font-weight:700;color:var(--text);line-height:1.4}
+.p-desc{font-size:12px;color:var(--text-muted);line-height:1.5;margin-bottom:8px;padding-left:42px}
+.p-actions{padding-left:42px;display:flex;gap:6px}
+.btn-view{font-size:11px;padding:4px 12px;border-radius:20px;border:1.5px solid var(--border);background:transparent;cursor:pointer;font-family:inherit;color:var(--text-muted);transition:all .15s}
+.btn-view:hover{border-color:var(--blue);color:var(--blue)}
+.btn-copy{font-size:11px;padding:4px 12px;border-radius:20px;border:1.5px solid var(--pink);background:transparent;cursor:pointer;font-family:inherit;color:var(--pink);transition:all .15s}
+.btn-copy:hover{background:var(--pink);color:#fff}
+.btn-copy.done{background:var(--pink);color:#fff}
+.prompt-full{display:none;margin-top:10px;margin-left:42px;padding:.75rem 1rem;background:var(--bg);border-radius:8px;font-size:12.5px;color:var(--text);line-height:1.75;white-space:pre-wrap;word-break:break-all;border-left:3px solid var(--blue)}
+.prompt-card.open .prompt-full{display:block}
+.no-result{text-align:center;padding:3rem 1rem;color:var(--text-muted);font-size:15px}
+
+/* ── 푸터 ── */
+.site-footer{text-align:center;padding:2rem 1rem;border-top:1px solid var(--border);color:var(--text-muted);font-size:12px;line-height:1.8}
+.site-footer strong{color:var(--blue)}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-badge">부록 — 프롬프트 100선</div>
+  <h1 class="header-title">AI가 사례기록 <span>쓰는 날</span></h1>
+  <p class="header-sub">사회복지사를 위한 AI 업무 자동화 실전 레시피</p>
+  <div class="header-meta">
+    <span>황지원 (Jessica Hwang)</span>
+    <span>총 100개 프롬프트</span>
+    <span>10개 챕터</span>
+  </div>
+</header>
+
+<div class="search-wrap">
+  <div class="search-inner">
+    <input type="text" class="search-box" id="searchBox" placeholder="프롬프트 검색 (예: 사례기록, 공문, 인스타...)">
+    <span class="count-badge" id="countBadge">100개</span>
+  </div>
+</div>
+
+<div class="filter-wrap">
+  <div class="filter-row" id="filterRow"></div>
+</div>
+
+<main class="main" id="mainWrap"></main>
+
+<footer class="site-footer">
+  <strong>《AI가 사례기록 쓰는 날》</strong> 부록 — 프롬프트 100선<br>
+  저자: 황지원 (Jessica Hwang) · 오늘도 AI<br>
+  이 프롬프트는 복지 실무에 자유롭게 활용하실 수 있습니다.
+</footer>
+
+<script>
+const chapters=[
+{id:"ch1",label:"Ch.1",title:"사례기록 & 상담일지",color:"#1a1aff",bg:"#eeeeff",tc:"#1a1aff",prompts:[
+{num:"001",title:"사례기록 초안 생성",desc:"상담 내용 메모만 입력하면 구조화된 기록 초안 완성",full:`다음 상담 메모를 바탕으로 사례기록 초안을 작성해 주세요.\n\n[메모 내용 입력]\n\n형식: 날짜 / 방문(상담) 방법 / 주요 내용 / 개입 내용 / 다음 계획\n개인정보는 ○○○ 또는 이니셜로 처리해 주세요.`},
+{num:"002",title:"SOAP 노트 작성",desc:"주관적·객관적·분석·계획 4단계 전문 기록 형식",full:`다음 내용을 SOAP 형식으로 정리해 주세요.\n\n[상담 내용 입력]\n\nS(Subjective): 클라이언트가 말한 내용\nO(Objective): 관찰된 사실\nA(Assessment): 복지사의 평가\nP(Plan): 계획\n\n전문 용어는 적절히 사용하되, 읽기 쉽게 작성해 주세요.`},
+{num:"003",title:"상담일지 3줄 요약",desc:"긴 상담 내용을 3줄 핵심 요약으로",full:`다음 상담 내용을 3줄 핵심 요약으로 정리해 주세요.\n\n[상담 내용]\n\n형식:\n1. 주요 욕구/문제:\n2. 개입 내용:\n3. 다음 단계:`},
+{num:"004",title:"가정방문 기록 초안",desc:"방문 메모 → 공식 방문기록서 형식으로 변환",full:`아래 방문 메모를 가정방문 기록서 형식으로 작성해 주세요.\n\n[메모]\n\n포함 항목: 방문일시, 방문목적, 가정환경 관찰, 대상자 상태, 주요 대화 내용, 제공 서비스, 향후 계획`},
+{num:"005",title:"위기 상황 기록",desc:"위기 개입 후 신속한 기록 작성",full:`위기 개입 상황을 아래 메모 기반으로 공식 기록으로 작성해 주세요.\n\n[상황 메모]\n\n포함: 위기 인지 경위, 개입 시각, 개입 내용, 연계 기관, 현재 상태, 후속 모니터링 계획`},
+{num:"006",title:"월간 사례 요약",desc:"한 달 지원 내역 → 월간 모니터링 보고서",full:`아래 월간 지원 내역을 월간 사례 요약 보고서로 작성해 주세요.\n\n[지원 내역 목록 입력]\n\n포함: 이용자 현황, 이달 주요 개입 내용, 욕구 변화, 다음 달 계획`},
+{num:"007",title:"인테이크 보고서",desc:"초기 면접 내용 → 인테이크 보고서",full:`아래 초기 면접 메모를 인테이크 보고서로 작성해 주세요.\n\n[면접 메모]\n\n항목: 의뢰 경로, 주 호소 문제, 가족 구성, 경제 상황, 건강 상태, 사회적 지지 현황, 초기 욕구 분석, 제공 가능 서비스`},
+{num:"008",title:"종결 기록 작성",desc:"서비스 종결 시 최종 기록 정리",full:`아래 내용을 바탕으로 사례 종결 기록을 작성해 주세요.\n\n[지원 기간 및 내용 요약]\n\n항목: 개입 기간, 주요 지원 내용, 목표 달성 여부, 종결 사유, 사후 관리 계획`},
+{num:"009",title:"욕구 평가 요약",desc:"욕구 조사 결과 → 평가 보고서",full:`아래 욕구 조사 결과를 요약 평가 보고서로 정리해 주세요.\n\n[조사 내용]\n\n포함: 주요 욕구 영역, 우선순위 욕구, 자원 현황, 권고 서비스 방향`},
+{num:"010",title:"다중 케이스 메모 정리",desc:"여러 케이스 메모를 한 번에 분류·정리",full:`아래 케이스 메모들을 각각 사례 번호별로 정리해 주세요.\n\n[메모 내용]\n\n각 케이스별 출력: 이용자(이니셜), 날짜, 주요 사항, 다음 액션`}
+]},
+{id:"ch2",label:"Ch.2",title:"보고서 & 공문",color:"#0d6e3e",bg:"#e8f5ee",tc:"#0d6e3e",prompts:[
+{num:"011",title:"사업결과보고서 초안",desc:"사업 실적 데이터 → 완성형 결과보고서",full:`아래 사업 실적 데이터를 바탕으로 사업결과보고서 초안을 작성해 주세요.\n\n[사업명, 기간, 대상, 실적 수치]\n\n항목: 사업 개요, 추진 경과, 실적 현황(표), 성과 및 평가, 향후 과제`},
+{num:"012",title:"월간 업무 보고서",desc:"이달 업무 내역 → 팀장/기관장 보고서",full:`이달 업무 내역을 월간 보고서로 정리해 주세요.\n\n[업무 내역 입력]\n\n형식: 주요 업무 실적 / 이슈 및 특이사항 / 다음 달 계획`},
+{num:"013",title:"협조 공문 작성",desc:"업무 협조 요청 공문 초안",full:`아래 내용으로 기관 간 협조 공문을 작성해 주세요.\n\n[협조 요청 내용, 수신 기관]\n\n공문 형식: 제목, 수신, 발신, 목적, 협조 요청 사항, 기한, 담당자`},
+{num:"014",title:"안내 공문 작성",desc:"프로그램·서비스 안내 공문",full:`아래 프로그램 정보를 기반으로 안내 공문을 작성해 주세요.\n\n[프로그램명, 일정, 대상, 내용]\n\n공문 형식: 사업 배경, 주요 내용, 참여 방법, 문의처`},
+{num:"015",title:"보조금 정산 보고서",desc:"지출 내역 → 보조금 정산 보고서 초안",full:`아래 지출 내역을 바탕으로 보조금 정산 보고서 초안을 작성해 주세요.\n\n[지출 내역 목록]\n\n포함: 사업 개요, 예산 집행 현황(항목별), 잔액 처리, 특이사항`},
+{num:"016",title:"후원금 감사 문구",desc:"후원자에게 보내는 영수증 + 감사 인사",full:`아래 후원 정보를 바탕으로 후원금 영수증과 감사 문구를 작성해 주세요.\n\n[후원자명, 금액, 날짜, 사업명]\n\n형식: 공식 영수증 문구 + 따뜻한 감사 인사`},
+{num:"017",title:"회의록 작성",desc:"회의 메모 → 공식 회의록",full:`아래 회의 메모를 공식 회의록으로 정리해 주세요.\n\n[메모 내용]\n\n형식: 회의명, 일시, 참석자, 안건, 논의 내용, 결정 사항, 다음 회의 일정`},
+{num:"018",title:"업무 인수인계서",desc:"담당 업무 인수인계 문서 초안",full:`아래 업무 내용을 인수인계서 형식으로 작성해 주세요.\n\n[업무 목록 및 현황]\n\n항목: 담당 업무 목록, 주요 케이스 현황, 진행 중 사업, 주의사항, 연락처`},
+{num:"019",title:"기관 협약서 초안",desc:"기관 간 MOU·협약서 기본 초안",full:`아래 협약 내용을 기관 협약서 초안으로 작성해 주세요.\n\n[협약 기관명, 협약 목적, 주요 내용]\n\n포함: 목적, 협약 기간, 각 기관 역할, 협약 내용, 준수 사항`},
+{num:"020",title:"지자체 제출 보고서",desc:"시·군·구청 제출용 보고서 형식 정리",full:`아래 내용을 지자체 제출 보고서 형식으로 정리해 주세요.\n\n[사업명, 기간, 대상, 실적]\n\n격식 있는 문어체로, 항목별 수치와 근거를 명확히 작성해 주세요.`}
+]},
+{id:"ch3",label:"Ch.3",title:"사업계획 & 기획",color:"#7a3f00",bg:"#fff3e0",tc:"#7a3f00",prompts:[
+{num:"021",title:"연간 사업계획서 초안",desc:"사업 개요 입력 → 연간 계획서 자동 생성",full:`아래 정보를 바탕으로 연간 사업계획서 초안을 작성해 주세요.\n\n[사업명, 목적, 대상, 예산 규모]\n\n항목: 사업 목적 및 필요성, 추진 전략, 월별 추진 계획, 예산 계획, 기대 효과`},
+{num:"022",title:"프로그램 기획서",desc:"아이디어 → 완성형 프로그램 기획서",full:`아래 아이디어를 프로그램 기획서로 작성해 주세요.\n\n[프로그램 아이디어, 대상, 기간]\n\n항목: 필요성, 목표, 대상자, 내용 구성(회기별), 장소·인력·예산, 기대 효과`},
+{num:"023",title:"욕구 조사 설계",desc:"조사 목적 → 욕구 조사 설계서",full:`아래 조사 목적에 맞는 욕구 조사 설계서를 작성해 주세요.\n\n[대상, 주요 파악 항목]\n\n포함: 조사 목적, 방법(설문/면접), 문항 구성(예시 5개 이상), 일정, 분석 방향`},
+{num:"024",title:"설문 문항 생성",desc:"조사 목적 → 설문지 문항 자동 생성",full:`아래 주제로 욕구 조사 설문지 문항을 만들어 주세요.\n\n[조사 주제, 대상]\n\n리커트 5점 척도 5문항 + 개방형 2문항 + 기본 인적사항 항목 포함`},
+{num:"025",title:"보조금 사업 신청서",desc:"공모 요강 분석 → 신청서 초안",full:`아래 공모 요강을 분석해서 신청서 초안을 작성해 주세요.\n\n[공모 요강 내용 붙여넣기]\n\n우리 기관의 강점과 신청 사업을 연결해 채점자 시선에서 설득력 있게 작성`},
+{num:"026",title:"SMART 성과 지표 설계",desc:"사업 목표 → SMART 지표로 변환",full:`아래 사업 목표를 SMART 성과 지표로 변환해 주세요.\n\n[사업 목표 입력]\n\nS(구체적) M(측정 가능) A(달성 가능) R(관련성) T(시한) 기준으로 3~5개 지표 제시`},
+{num:"027",title:"회기별 프로그램 구성",desc:"총 회기 수 입력 → 회기별 내용 설계",full:`아래 프로그램을 총 [N]회기로 구성해 주세요.\n\n[프로그램명, 대상, 목표]\n\n각 회기: 주제 / 목표 / 활동 내용 / 준비물 / 유의사항`},
+{num:"028",title:"예산 편성 초안",desc:"사업 내용 → 항목별 예산안",full:`아래 사업에 필요한 예산 편성 초안을 작성해 주세요.\n\n[사업명, 기간, 규모]\n\n항목: 인건비, 사업비(세부 항목별), 관리운영비, 각 산출 근거 포함`},
+{num:"029",title:"사업 평가 계획",desc:"사업 목표 → 평가 계획 수립",full:`아래 사업의 평가 계획을 수립해 주세요.\n\n[사업명, 목표, 지표]\n\n포함: 평가 시기(중간/최종), 평가 방법, 측정 도구, 담당자, 피드백 반영 방안`},
+{num:"030",title:"보고서 목차 설계",desc:"사업 성격 → 최적 보고서 목차 제안",full:`아래 사업 특성에 맞는 결과보고서 목차를 설계해 주세요.\n\n[사업명, 주요 내용, 대상]\n\n챕터·소항목 구성 + 각 항목별 작성 가이드 1줄 포함`}
+]},
+{id:"ch4",label:"Ch.4",title:"홍보 & SNS",color:"#a0118c",bg:"#fce4f8",tc:"#a0118c",prompts:[
+{num:"031",title:"인스타그램 캡션",desc:"프로그램·행사 정보 → 인스타 게시글",full:`아래 내용으로 기관 인스타그램 캡션을 작성해 주세요.\n\n[프로그램명, 내용, 날짜]\n\n첫 줄: 클릭을 부르는 후킹 문장\n본문: 핵심 정보 + 감성 문장\n해시태그: 관련 해시태그 10개\n길이: 150자 내외`},
+{num:"032",title:"카카오채널 공지",desc:"행사 정보 → 카카오 단문 공지",full:`아래 내용을 카카오채널 공지 문자로 작성해 주세요.\n\n[공지 내용]\n\n첫 줄: 핵심 정보\n짧고 명확하게, 이모지 2개 이내, 링크·문의처 포함, 100자 이내`},
+{num:"033",title:"기관 뉴스레터 본문",desc:"이달의 소식 → 뉴스레터 기사 형식",full:`아래 내용을 기관 뉴스레터 기사로 작성해 주세요.\n\n[주제, 주요 내용]\n\n형식: 제목 / 부제 / 도입(2문장) / 본문(3~4단락) / 마무리(독자 행동 유도)\n어조: 따뜻하고 친근하게`},
+{num:"034",title:"보도자료 초안",desc:"행사·성과 → 언론 배포용 보도자료",full:`아래 내용으로 보도자료를 작성해 주세요.\n\n[기관명, 사업명, 성과 수치, 담당자]\n\n형식: 배포 날짜 / 제목(5~7단어) / 리드문 / 본문(역피라미드) / 기관 소개 / 문의처`},
+{num:"035",title:"카드뉴스 슬라이드 문구",desc:"정보 → 카드뉴스 슬라이드별 문구",full:`아래 내용을 카드뉴스 슬라이드 문구로 작성해 주세요.\n\n[주제, 핵심 정보]\n\n슬라이드 1: 주목을 끄는 제목\n슬라이드 2~5: 핵심 정보 (슬라이드당 15자 이내)\n슬라이드 6: 행동 유도 문구`},
+{num:"036",title:"모집 공고문",desc:"프로그램 참가자 모집 공고",full:`아래 프로그램 정보로 참가자 모집 공고문을 작성해 주세요.\n\n[프로그램명, 대상, 기간, 장소, 인원]\n\n포함: 프로그램 소개, 신청 자격, 혜택, 신청 방법, 문의처\n어조: 참여를 끌어내는 따뜻하고 설득력 있는 문장`},
+{num:"037",title:"기관 소개 문구 3종",desc:"기관 정보 → 홈페이지·인쇄물용 소개글",full:`아래 기관 정보를 바탕으로 소개 문구를 작성해 주세요.\n\n[기관명, 설립 연도, 주요 사업, 철학]\n\n버전 3가지: ① 30자(배너용) ② 100자(명함·리플렛) ③ 300자(홈페이지 소개)`},
+{num:"038",title:"후원 요청 문자",desc:"잠재 후원자에게 보내는 후원 요청",full:`아래 정보로 후원 요청 문자를 작성해 주세요.\n\n[기관명, 후원 사업, 후원 금액, 연락처]\n\n진심이 느껴지는 문장으로, 구체적 사용처 명시, 150자 이내`},
+{num:"039",title:"행사 안내 문자",desc:"행사 참가자에게 보내는 사전 안내",full:`아래 행사 정보로 참가자 안내 문자를 작성해 주세요.\n\n[행사명, 일시, 장소, 준비물]\n\n친근하고 명확하게, 핵심 정보만, 100자 이내`},
+{num:"040",title:"SNS 해시태그 세트",desc:"기관·프로그램 맞춤 해시태그 생성",full:`아래 기관과 프로그램에 맞는 SNS 해시태그 20개를 생성해 주세요.\n\n[기관명, 사업명, 지역, 대상]\n\n분류: 기관 고정 해시태그 10개 + 이번 게시물 전용 10개`}
+]},
+{id:"ch5",label:"Ch.5",title:"교육 & 가정통신문",color:"#145970",bg:"#e1f3f8",tc:"#145970",prompts:[
+{num:"041",title:"가정통신문 초안",desc:"행사 정보 → 가정 발송 통신문",full:`아래 내용으로 가정통신문을 작성해 주세요.\n\n[프로그램명, 일시, 장소, 준비물, 주의사항]\n\n어조: 학부모가 읽기 쉽도록 친근하고 명확하게\n길이: A4 반장 분량`},
+{num:"042",title:"아동 대상 안내문",desc:"아이들이 읽는 쉬운 안내문",full:`아래 내용을 초등학생(저학년)이 이해할 수 있는 안내문으로 작성해 주세요.\n\n[안내 내용]\n\n짧고 쉬운 문장, 이모지 활용, 핵심만, A4 1/3 분량`},
+{num:"043",title:"교육 커리큘럼 설계",desc:"교육 목표 → 회기별 커리큘럼",full:`아래 교육 목표로 [N]회기 커리큘럼을 설계해 주세요.\n\n[대상, 목표, 총 회기]\n\n회기별: 주제 / 학습 목표 / 활동 / 준비물`},
+{num:"044",title:"교육 자료 핵심 요약",desc:"복잡한 자료 → 핵심 요약 슬라이드 문구",full:`아래 교육 자료를 슬라이드 발표용으로 핵심 요약해 주세요.\n\n[원본 자료 내용]\n\n슬라이드당 키워드 3개 + 핵심 문장 1개 구조로`},
+{num:"045",title:"강의 소개 문구",desc:"강의 정보 → 수강 안내 문구",full:`아래 강의 정보를 수강생 모집 안내 문구로 작성해 주세요.\n\n[강의명, 내용, 강사, 일정]\n\n매력적인 제목 + 수강 후 변화 중심으로 작성`},
+{num:"046",title:"워크시트 문항 생성",desc:"주제 → 교육용 워크시트 문항",full:`아래 주제로 교육 워크시트 문항을 만들어 주세요.\n\n[주제, 대상, 교육 목표]\n\n성찰 질문 3개 + 실습 활동 2개 + 오늘의 다짐 1개`},
+{num:"047",title:"교육 후기 분석 요약",desc:"수강생 후기 → 요약 보고서",full:`아래 수강생 후기를 요약 분석해 주세요.\n\n[후기 목록]\n\n포함: 긍정 반응 Top3, 개선 요청 Top3, 전반적 만족도 평가, 인용 문장 2개`},
+{num:"048",title:"사전 진단 설문 문항",desc:"교육 사전 진단용 설문 문항 생성",full:`아래 교육을 위한 사전 진단 설문 문항을 만들어 주세요.\n\n[교육명, 대상, 교육 목표]\n\n현재 수준 파악 5문항 + 교육 기대 사항 2문항`},
+{num:"049",title:"수료증 문구",desc:"수료증·감사장 문구 작성",full:`아래 정보로 수료증 문구를 작성해 주세요.\n\n[기관명, 교육명, 기간, 수료자]\n\n공식적이면서도 따뜻한 문장으로, 수료자의 노력을 인정하는 표현 포함`},
+{num:"050",title:"만족도 조사 분석 보고서",desc:"만족도 조사 결과 → 분석 보고서",full:`아래 만족도 조사 결과를 분석 보고서로 정리해 주세요.\n\n[점수 데이터, 주관식 응답]\n\n포함: 항목별 평균 점수, 긍·부정 키워드, 개선 권고 사항`}
+]},
+{id:"ch6",label:"Ch.6",title:"AI 세팅 & GPTs",color:"#333",bg:"#f2f2f2",tc:"#333",prompts:[
+{num:"051",title:"복지사 맞춤 시스템 프롬프트",desc:"ChatGPT·Claude를 복지 전용으로 세팅",full:`복지 업무 전용 AI 어시스턴트로 설정해 주세요.\n\n역할: 사회복지사의 업무를 돕는 전문 보조 AI\n전문 영역: 사례기록, 보고서 작성, 공문, 홍보, 교육 자료\n언어: 한국 복지 현장 공식 문서 스타일\n개인정보: 절대 외부 저장하지 않음\n주의: 진단, 처방, 법적 판단은 수행하지 않음`},
+{num:"052",title:"기관 전용 GPTs 프롬프트",desc:"기관 전용 GPTs 시스템 프롬프트 초안",full:`우리 기관([기관명]) 전용 GPTs 시스템 프롬프트를 작성해 주세요.\n\n[기관 특성, 주요 업무, 주의사항]\n\n포함: 역할 정의, 업무 범위, 금지 사항, 출력 형식 가이드`},
+{num:"053",title:"개인정보 마스킹 요청",desc:"기록 작성 전 개인정보 제거 프롬프트",full:`아래 내용에서 개인정보를 마스킹한 후 [작업 내용] 해 주세요.\n\n[원문]\n\n규칙: 이름→○○○, 주소→○○시 ○○구, 연락처→010-****-****, 생년월일→19**.**.**`},
+{num:"054",title:"AI 활용 가능 여부 판단",desc:"AI를 쓰면 안 되는 상황 판단 요청",full:`지금 제가 하려는 작업에 AI를 활용해도 괜찮은지 판단해 주세요.\n\n[작업 내용]\n\n판단 기준: 개인정보 포함 여부, 법적 판단 포함 여부, 클라이언트 동의 여부`},
+{num:"055",title:"AI 답변 오류 검토",desc:"AI 생성 초안의 오류·위험 검토",full:`아래 AI가 작성한 내용을 검토해 주세요.\n\n[AI 생성 내용]\n\n확인 항목: 사실 오류, 개인정보 노출, 비윤리적 표현, 복지 현장과 맞지 않는 내용`},
+{num:"056",title:"프롬프트 개선 요청",desc:"쓰던 프롬프트를 더 효과적으로 개선",full:`아래 프롬프트를 더 효과적으로 개선해 주세요.\n\n[기존 프롬프트]\n\n개선 방향: 더 구체적인 출력 / 더 짧은 응답 / 더 공식적인 문체 (택1)`},
+{num:"057",title:"복지 전문 용어 해설",desc:"생소한 복지 용어를 쉽게 설명받기",full:`아래 복지 관련 용어를 현장 실무자 관점에서 쉽게 설명해 주세요.\n\n[용어]\n\n포함: 정의(1문장), 현장 예시(1개), 관련 제도/법령(있으면)`},
+{num:"058",title:"영문 복지 자료 번역 요약",desc:"영문 복지 자료 → 한글 요약 번역",full:`아래 영문 자료를 한국 복지 현장 실무자 관점에서 번역·요약해 주세요.\n\n[영문 자료]\n\n형식: 핵심 내용 요약(3~5줄) + 현장 적용 시사점 1~2개`},
+{num:"059",title:"법령 조문 풀이",desc:"복지 관련 법령 조문 쉽게 풀이",full:`아래 법령 조문을 복지 현장 실무자가 이해하기 쉽게 설명해 주세요.\n\n[조문 내용]\n\n포함: 핵심 내용 요약, 실무 적용 예시, 주의사항\n주의: 법적 조언이 아닌 내용 이해를 위한 설명임을 명시`},
+{num:"060",title:"AI 활용 동의 안내문",desc:"클라이언트에게 AI 활용 안내하는 문구",full:`클라이언트에게 AI 도구 활용 사실을 안내하는 문구를 작성해 주세요.\n\n어조: 친근하고 이해하기 쉽게\n포함: AI 활용 범위, 개인정보 보호 조치, 동의 여부 확인\n길이: 200자 이내`}
+]},
+{id:"ch7",label:"Ch.7",title:"윤리 & 복잡한 상황",color:"#5a2075",bg:"#f3e6ff",tc:"#5a2075",prompts:[
+{num:"061",title:"윤리적 딜레마 분석",desc:"복잡한 상황을 윤리적 관점으로 정리",full:`아래 상황을 사회복지 윤리 원칙에 따라 분석해 주세요.\n\n[상황 설명]\n\n분석 관점: 자기결정권, 비밀보장, 최소한의 개입, 최선의 이익\n주의: 법적 판단이 아닌 윤리적 분석임`},
+{num:"062",title:"위기 대응 절차 정리",desc:"위기 상황 대응 체계 점검",full:`아래 위기 상황에서의 대응 절차를 정리해 주세요.\n\n[위기 유형: 자해위험/가정폭력/아동학대/노인 방임 중 택1]\n\n순서: 즉각 조치 → 신고 의무 → 연계 기관 → 사후 모니터링`},
+{num:"063",title:"어려운 대화 스크립트",desc:"힘든 소식을 전하는 대화 준비",full:`아래 상황에서 클라이언트에게 어려운 소식을 전달하는 대화 스크립트를 작성해 주세요.\n\n[상황: 서비스 종결/거절/제한 등]\n\n원칙: 존중, 공감, 명확한 전달\n주의: 실제 대화는 복지사의 판단으로 조정 필요`},
+{num:"064",title:"컴플레인 대응 문구",desc:"이용자 불만 접수 → 공식 대응 문구",full:`아래 이용자 불만 내용에 대한 공식 대응 문구를 작성해 주세요.\n\n[불만 내용]\n\n형식: 수신 확인 → 사실 인정/경청 → 조치 내용 → 향후 방지 → 감사\n어조: 정중하고 책임감 있게`},
+{num:"065",title:"소진 예방 자기 점검표",desc:"복지사 소진 위험 자가 점검 도구",full:`사회복지사 소진(번아웃) 자기 점검 체크리스트를 만들어 주세요.\n\n영역: 신체적/정서적/인지적/행동적 소진 신호\n각 영역 5문항, 5점 척도\n해석 기준(점수별 권고 사항) 포함`},
+{num:"066",title:"슈퍼비전 준비 메모",desc:"슈퍼비전 전 사례 정리 메모",full:`아래 케이스를 슈퍼비전 준비 메모로 정리해 주세요.\n\n[케이스 내용]\n\n포함: 사례 요약(3줄), 현재 개입 내용, 슈퍼바이저에게 묻고 싶은 질문 3개`},
+{num:"067",title:"다문화 가족 맞춤 안내문",desc:"다문화 가족 대상 맞춤 안내문",full:`다문화 가족 대상 [서비스명] 안내문을 작성해 주세요.\n\n[서비스 내용]\n\n쉬운 한국어, 가능하면 영어 병기\n문화적 감수성 있는 표현 사용`},
+{num:"068",title:"아동 학대 의심 관찰 기록",desc:"의심 상황 관찰 → 공식 기록 정리",full:`아래 관찰 내용을 아동학대 의심 사례 기록으로 정리해 주세요.\n\n[관찰 내용]\n\n형식: 관찰 일시, 장소, 관찰 사실(추측 없이 사실만), 아동 반응, 조치 사항\n주의: 확정 판단이 아닌 관찰 사실만 기록`},
+{num:"069",title:"자원 연계 계획서",desc:"클라이언트 욕구 → 연계 자원 매핑",full:`아래 클라이언트 상황에 맞는 자원 연계 계획을 작성해 주세요.\n\n[욕구 및 현재 상황]\n\n항목: 우선 연계 자원(공식/비공식), 연계 방법, 담당자, 일정, 후속 확인 시점`},
+{num:"070",title:"개인정보 처리 방침 안내문",desc:"기관 개인정보 처리 안내문 초안",full:`우리 기관([기관명])의 이용자 개인정보 처리 방침 안내문 초안을 작성해 주세요.\n\n[수집 항목, 이용 목적, 보유 기간]\n\n법적 요건 반영, 이해하기 쉬운 문장, A4 1장 분량`}
+]},
+{id:"ch8",label:"Ch.8",title:"행정 & 효율화",color:"#145530",bg:"#e6f4ed",tc:"#145530",prompts:[
+{num:"071",title:"공식 이메일 초안",desc:"요점 입력 → 공식 이메일 초안",full:`아래 요점으로 이메일을 작성해 주세요.\n\n수신: [이름/기관]\n목적: [요청/안내/감사 중 택1]\n주요 내용: [핵심 포인트]\n\n어조: 공손하고 명확하게, 불필요한 내용 없이`},
+{num:"072",title:"회의 안건 자료",desc:"회의 전 안건 목록 → 안건 자료 초안",full:`아래 안건 목록을 회의 자료로 정리해 주세요.\n\n[안건 목록]\n\n각 안건: 배경(1줄) / 현황 / 논의 사항 / 결정 필요 사항`},
+{num:"073",title:"업무 우선순위 매트릭스",desc:"할 일 목록 → 우선순위별 정리",full:`아래 오늘 해야 할 업무를 우선순위로 정리해 주세요.\n\n[업무 목록]\n\n분류: 긴급+중요 / 중요하지만 긴급하지 않음 / 긴급하지만 중요하지 않음 / 나중에 해도 됨`},
+{num:"074",title:"업무 체크리스트 생성",desc:"업무 프로세스 → 체크리스트",full:`아래 업무를 빠짐없이 처리하기 위한 체크리스트를 만들어 주세요.\n\n[업무 내용]\n\n단계별 항목으로 구성, 담당자·기한 칸 포함`},
+{num:"075",title:"반려 서류 재작성",desc:"반려 사유 → 수정 포인트 파악 + 재작성",full:`아래 반려된 서류의 반려 사유를 분석하고 재작성 방향을 제시해 주세요.\n\n[원본 서류 내용 + 반려 사유]\n\n포함: 문제점 분석, 수정 사항, 재작성 초안`},
+{num:"076",title:"연간 일정 초안",desc:"사업 목록 → 월별 연간 일정표",full:`아래 사업과 행사를 연간 일정표로 배치해 주세요.\n\n[사업·행사 목록]\n\n월별 주요 일정 + 준비 시작 시점 + 담당자 칸 포함`},
+{num:"077",title:"내부 교육 자료 공유 요약",desc:"외부 연수 자료 → 내부 공유용 요약",full:`아래 연수(교육) 자료를 동료 공유용 요약문으로 정리해 주세요.\n\n[연수 내용]\n\n포함: 핵심 내용 3가지, 현장 적용 아이디어 2가지, 추천 이유 1줄`},
+{num:"078",title:"업무 매뉴얼 작성",desc:"반복 업무 → 단계별 매뉴얼",full:`아래 업무를 신규 직원도 따라할 수 있는 매뉴얼로 작성해 주세요.\n\n[업무 내용]\n\n형식: 단계별(1→2→3), 각 단계 주의사항 포함, 담당자·시스템·서식 정보 포함`},
+{num:"079",title:"민원 처리 절차 정리",desc:"민원 내용 → 처리 절차 정리",full:`아래 민원을 처리 절차에 따라 정리해 주세요.\n\n[민원 내용]\n\n포함: 민원 내용 요약, 처리 담당부서, 처리 기한, 필요 서류, 답변 방향`},
+{num:"080",title:"주간 보고서",desc:"한 주 업무 → 주간 보고서",full:`이번 주 업무 내역을 주간 보고서로 정리해 주세요.\n\n[이번 주 주요 업무]\n\n형식: 완료 업무 / 진행 중 업무 / 이슈 / 다음 주 계획`}
+]},
+{id:"ch9",label:"Ch.9",title:"아동복지 특화",color:"#7a4200",bg:"#fff3dc",tc:"#7a4200",prompts:[
+{num:"081",title:"아동 돌봄 일지",desc:"돌봄 메모 → 공식 아동 돌봄 일지",full:`아래 메모를 아동 돌봄 일지로 작성해 주세요.\n\n[메모 내용]\n\n항목: 날짜, 아동 상태(건강/정서), 오늘의 활동, 특이사항, 부모 전달 사항`},
+{num:"082",title:"아동 발달 관찰 기록",desc:"관찰 내용 → 발달 영역별 기록",full:`아래 아동 관찰 내용을 발달 영역별로 정리해 주세요.\n\n[관찰 내용, 연령]\n\n영역: 신체/언어/인지/사회정서\n각 영역별 관찰 사실 기록 (평가 아닌 사실 중심)`},
+{num:"083",title:"부모 상담 일지",desc:"부모 면담 메모 → 상담 일지",full:`아래 부모 면담 메모를 상담 일지로 정리해 주세요.\n\n[면담 메모]\n\n항목: 상담일시, 참석자, 주요 상담 내용, 부모 욕구, 합의 사항, 다음 상담 계획`},
+{num:"084",title:"아동 프로그램 회기 계획",desc:"아동 대상 회기별 프로그램 설계",full:`아래 목표로 아동 대상 프로그램 회기 계획을 세워 주세요.\n\n[대상 연령, 목표, 총 회기]\n\n회기별: 주제 / 목표 / 주요 활동 / 준비물 / 유의사항`},
+{num:"085",title:"아동 학대 예방 안내문",desc:"아동 학대 예방 교육 안내 자료",full:`아동학대 예방 교육 안내문을 작성해 주세요.\n\n대상: [학부모 / 아동 / 지역주민 중 택1]\n포함: 학대 유형 설명(쉬운 말), 신고 방법, 도움받을 곳\n어조: 따뜻하고 명확하게`},
+{num:"086",title:"방과후 프로그램 안내",desc:"방과후 프로그램 학부모 안내문",full:`아래 방과후 프로그램 정보를 학부모 안내문으로 작성해 주세요.\n\n[프로그램명, 내용, 일정, 비용]\n\n학부모 입장에서 알고 싶은 정보 중심, 친근하고 명확하게`},
+{num:"087",title:"아동 권리 교육 자료",desc:"아동 권리 교육 프로그램 자료",full:`[연령대] 아동을 위한 아동 권리 교육 자료를 만들어 주세요.\n\n포함: 권리 4가지(생존/보호/발달/참여) 쉬운 설명 + 사례 + 활동 아이디어`},
+{num:"088",title:"기관 평가 준비 체크리스트",desc:"아동복지 기관 평가 준비 체크리스트",full:`아동복지 기관 평가를 준비하는 체크리스트를 만들어 주세요.\n\n[평가 유형: 아동복지시설/지역아동센터 평가 등]\n\n영역별 준비 항목 + 준비 완료 여부 체크칸 포함`},
+{num:"089",title:"이용자 만족도 조사 문항",desc:"아동·학부모 대상 만족도 조사 문항",full:`아동 돌봄 서비스 만족도 조사 문항을 만들어 주세요.\n\n버전: [아동용(쉬운 말) / 학부모용 중 택1]\n5점 척도 5문항 + 개방형 2문항`},
+{num:"090",title:"지역 자원 연계 안내",desc:"아동 가족에게 연계 자원 안내하는 문구",full:`아래 가족 상황에 맞는 지역 자원 안내문을 작성해 주세요.\n\n[가족 상황, 주요 욕구]\n\n포함: 이용 가능 서비스명, 연락처, 신청 방법, 담당자 메모`}
+]},
+{id:"ch10",label:"Ch.10",title:"미래 & AI 발전",color:"#222",bg:"#f5f5f5",tc:"#222",prompts:[
+{num:"091",title:"AI 도입 제안서",desc:"기관 AI 도입 필요성 제안서",full:`우리 기관에 AI 도구 도입을 제안하는 보고서를 작성해 주세요.\n\n[기관 특성, 주요 문제, 도입 희망 도구]\n\n포함: 현황 문제, AI 도입 효과, 예상 비용·시간 절감, 단계적 도입 계획`},
+{num:"092",title:"직원 AI 교육 계획",desc:"직원 대상 AI 교육 계획 초안",full:`직원 대상 AI 활용 교육 계획서를 작성해 주세요.\n\n[직원 수, 현재 AI 이해도, 교육 시간]\n\n포함: 교육 목표, 커리큘럼(단계별), 실습 방법, 기대 효과`},
+{num:"093",title:"AI 도입 성과 보고",desc:"AI 도입 후 업무 효율 변화 보고",full:`AI 도구 도입 후 업무 효율 변화를 보고서로 작성해 주세요.\n\n[도입 전·후 비교 데이터]\n\n포함: 업무 시간 절감 수치, 만족도 변화, 문제점, 개선 방향`},
+{num:"094",title:"기관 AI 윤리 가이드라인",desc:"기관 AI 활용 윤리 가이드라인",full:`우리 기관([기관명]) AI 활용 윤리 가이드라인 초안을 작성해 주세요.\n\n포함: 활용 원칙, 금지 사항, 개인정보 보호 수칙, 품질 검토 의무, 담당자 책임`},
+{num:"095",title:"복지사 미래 역할 분석",desc:"AI 시대 복지사 역할 변화 정리",full:`AI 시대에 사회복지사의 역할이 어떻게 변화할지 분석해 주세요.\n\n포함: AI가 대체하는 영역, AI가 대체 못하는 영역, 복지사에게 더 중요해지는 역량, 준비 방향`},
+{num:"096",title:"디지털 취약 계층 지원 계획",desc:"AI 격차 대응 지원 계획 초안",full:`디지털 취약 계층(노인/장애인/다문화 등) 지원 계획을 작성해 주세요.\n\n[대상, 주요 어려움]\n\n포함: 문제 현황, 지원 방향, 구체적 프로그램 아이디어 3개, 연계 자원`},
+{num:"097",title:"신규 복지 서비스 아이디어",desc:"AI 활용 신규 복지 서비스 아이디어",full:`AI를 활용한 새로운 복지 서비스 아이디어를 3가지 제안해 주세요.\n\n[기관 유형, 주요 대상]\n\n각 아이디어: 서비스명 / 개요 / AI 활용 방법 / 기대 효과 / 준비 사항`},
+{num:"098",title:"복지·AI 논문 핵심 요약",desc:"복지·AI 관련 논문 핵심 요약",full:`아래 학술 논문을 실무자가 이해하기 쉽게 요약해 주세요.\n\n[논문 제목 또는 초록]\n\n포함: 연구 목적, 방법, 주요 결과, 현장 시사점 2가지\n길이: 300자 이내`},
+{num:"099",title:"기관 AI 비전 선언문",desc:"기관 AI 활용 비전 선언문",full:`AI 시대 우리 기관의 비전 선언문을 작성해 주세요.\n\n[기관명, 핵심 가치, 주요 대상]\n\n형식: 한 줄 비전 + 3대 실천 방향 + 마무리 문장\n어조: 진심이 담긴, 현장 복지사가 공감할 수 있는 언어`},
+{num:"100",title:"나만의 AI 활용 루틴 설계",desc:"업무 패턴 → 개인 맞춤 AI 활용 루틴",full:`아래 나의 업무 패턴을 바탕으로 AI 활용 루틴을 설계해 주세요.\n\n[현재 하루 업무 흐름 입력]\n\n포함: AI 활용 추천 업무 목록, 시간대별 루틴, 사용 도구 추천, 주의사항`}
+]}
+];
+
+const filterRow=document.getElementById('filterRow');
+const mainWrap=document.getElementById('mainWrap');
+const searchBox=document.getElementById('searchBox');
+const countBadge=document.getElementById('countBadge');
+let activeFilter='all';
+let searchQuery='';
+
+// 필터 버튼 생성
+const allBtn=document.createElement('button');
+allBtn.className='f-btn active';allBtn.textContent='전체 100개';
+allBtn.onclick=()=>setFilter('all',allBtn);
+filterRow.appendChild(allBtn);
+chapters.forEach(ch=>{
+  const btn=document.createElement('button');
+  btn.className='f-btn';btn.textContent=ch.label;
+  btn.onclick=()=>setFilter(ch.id,btn);
+  filterRow.appendChild(btn);
+});
+
+function setFilter(id,el){
+  activeFilter=id;
+  document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+
+searchBox.addEventListener('input',()=>{searchQuery=searchBox.value.trim();render();});
+
+function render(){
+  mainWrap.innerHTML='';
+  let total=0;
+  const filtered=activeFilter==='all'?chapters:chapters.filter(c=>c.id===activeFilter);
+  filtered.forEach(ch=>{
+    const prompts=searchQuery
+      ?ch.prompts.filter(p=>p.title.includes(searchQuery)||p.desc.includes(searchQuery)||p.full.includes(searchQuery))
+      :ch.prompts;
+    if(!prompts.length)return;
+    total+=prompts.length;
+    const block=document.createElement('div');block.className='chapter-block';
+    const hdr=document.createElement('div');hdr.className='ch-header';
+    hdr.innerHTML=`<span class="ch-label" style="background:${ch.bg};color:${ch.tc}">${ch.label} ${ch.title}</span><span class="ch-cnt">${prompts.length}개</span>`;
+    block.appendChild(hdr);
+    const grid=document.createElement('div');grid.className='prompt-grid';
+    prompts.forEach(p=>{
+      const card=document.createElement('div');card.className='prompt-card';
+      card.innerHTML=`<div class="p-top"><span class="p-num" style="color:${ch.tc}">#${p.num}</span><span class="p-title">${p.title}</span></div><div class="p-desc">${p.desc}</div><div class="p-actions"><button class="btn-view">펼쳐보기 ↓</button><button class="btn-copy">복사하기</button></div><pre class="prompt-full">${p.full.replace(/</g,'&lt;')}</pre>`;
+      const viewBtn=card.querySelector('.btn-view');
+      const copyBtn=card.querySelector('.btn-copy');
+      viewBtn.onclick=()=>{
+        const isOpen=card.classList.toggle('open');
+        viewBtn.textContent=isOpen?'접기 ↑':'펼쳐보기 ↓';
+      };
+      copyBtn.onclick=()=>{
+        navigator.clipboard&&navigator.clipboard.writeText(p.full).then(()=>{
+          copyBtn.textContent='복사됨 ✓';copyBtn.classList.add('done');
+          setTimeout(()=>{copyBtn.textContent='복사하기';copyBtn.classList.remove('done');},1800);
+        });
+      };
+      grid.appendChild(card);
+    });
+    block.appendChild(grid);
+    mainWrap.appendChild(block);
+  });
+  if(!total){
+    mainWrap.innerHTML='<div class="no-result">검색 결과가 없습니다.</div>';
+  }
+  countBadge.textContent=total+'개';
+}
+render();
+</script>
+</body>
+</html>
