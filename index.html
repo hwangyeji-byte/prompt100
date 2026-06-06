@@ -76,7 +76,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
 <header class="site-header">
   <div class="header-badge">부록 — 프롬프트 100선</div>
-  <h1 class="header-title">AI가 사례기록 <span>쓰는 날</span></h1>
+  <h1 class="header-title">서류는 AI에게, <span>복지는 사람에게</span></h1>
   <p class="header-sub">사회복지사를 위한 AI 업무 자동화 실전 레시피</p>
   <div class="header-meta">
     <span>황지원 (Jessica Hwang)</span>
@@ -99,7 +99,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 <main class="main" id="mainWrap"></main>
 
 <footer class="site-footer">
-  <strong>《AI가 사례기록 쓰는 날》</strong> 부록 — 프롬프트 100선<br>
+  <strong>《서류는 AI에게, 복지는 사람에게》</strong> 부록 — 프롬프트 100선<br>
   저자: 황지원 (Jessica Hwang) · 오늘도 AI<br>
   이 프롬프트는 복지 실무에 자유롭게 활용하실 수 있습니다.
 </footer>
@@ -235,7 +235,6 @@ const countBadge=document.getElementById('countBadge');
 let activeFilter='all';
 let searchQuery='';
 
-// 필터 버튼 생성
 const allBtn=document.createElement('button');
 allBtn.className='f-btn active';allBtn.textContent='전체 100개';
 allBtn.onclick=()=>setFilter('all',allBtn);
